@@ -20,4 +20,6 @@ roadmap:
 * input from file
 * board generator
 * benchmarks
+* optimization ( parallel? let's test)
+* web ui react
 
