@@ -5,3 +5,11 @@ authors = ["mauro cordioli <mauro.cordioli@ezlab.it>"]
 edition = "2018"
 
 [dependencies]
+
+[dev-dependencies]
+criterion = "*"
+
+[[bench]]
+name = "my_benchmarks"
+path ="./src/my_benchmarks.rs"
+harness = false

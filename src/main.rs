@@ -7,7 +7,7 @@ use std::io;
 fn main_solve<T>(f:T) ->Option<()> where T: io::Read {
 
     let mut b0 = rssudoku::Board::new();
-    b0.read_from(f);
+    b0.read_from(f).unwrap();
      println!("start board");
     b0.print();
     println!("solving...");

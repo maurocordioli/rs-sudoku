@@ -1,7 +1,7 @@
 use std::fmt;
 use std::io;
 use std::io::prelude::*;
-use std::string::*;
+ 
 
 
 #[derive(Debug)]
@@ -37,22 +37,25 @@ pub struct Board {
 impl Board {
     pub fn new() -> Self {  Board { cels: vec!(0;81) , traceback:0 ,trace_assumptions:0,trace_main_assumptions:0 }  }
 
+
+    
     pub fn read_from<T,>(&mut self,  input_reader : T) -> Result<(), io::Error>  where  T: io::Read,
     {
-    let mut file = io::BufReader::new(input_reader);
+    let file = io::BufReader::new(input_reader);
     let mut i =0_usize;
      
-    let v =0_u8;
+    
 
     for line in file.lines() {
         let l = line.unwrap();
-        if l.starts_with("#") { break;} 
+        if l.starts_with("#") { break;}
+        if l.len()==81 {
+           
+             for  (p,v) in l.chars().enumerate() { self.s(p / 9 ,p % 9, v as u8 - ('0' as u8)); }
+             i+=9;
+        } 
         if l.len()==9 {
-            for  (j,v) in l.chars().enumerate() {
-
-                self.s(i,j, v as u8 - ('0' as u8));
-
-            }
+            for  (j,v) in l.chars().enumerate() { self.s(i,j, v as u8 - ('0' as u8)); }
          i+=1;
         }
         if l.len()==21 {
@@ -60,7 +63,7 @@ impl Board {
             let ll_len =ll.len();
 
           
-            let j:usize=0;
+       
 
             for  (j,v) in ll.into_iter().enumerate() {
 
@@ -160,7 +163,7 @@ impl Board {
 
 
 
-
+///get alternative values for a given position
 pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
 
    let  mut seen = vec![ false;10];
@@ -193,7 +196,7 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
             }
    };
 
-//println!("seen cols: {:?}",seen );
+    //println!("seen cols: {:?}",seen );
     
 
     let i0= (r / 3)*3;
@@ -215,7 +218,7 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
        
    };
 
-//println!("seen section: {:?}",seen );
+   //println!("seen section: {:?}",seen );
 
 
     for i in 1..10 {
@@ -228,8 +231,9 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
    }
  
 
- ///make_assumptions make the Assumptions on the possible solution
-    pub fn   make_assumptions(&mut self,ix: usize, jx: usize, t: u8) ->  Vec<Assumption> {
+///make_assumptions make the Assumptions on the possible solutions with some look forward 
+/// as when for a cell in the board there is only one alternative, and cheking the "touched" positions in the board   
+pub fn   make_assumptions(&mut self,ix: usize, jx: usize, t: u8) ->  Vec<Assumption> {
     let mut ass =vec![];
 	
     self.s(ix,jx, t);
@@ -238,28 +242,69 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
     self.trace_assumptions+=1;
     self.trace_main_assumptions+=1;
 
+    let mut touched=vec![false;81];
+    let mut retouch=vec![false;81];
+    let mut found =1;
 
-	for i  in 0..9   {
+
+
+     /* for i  in 0..9   {
 		for j in 0..9  {
 			if !(ix == i && jx == j) {
-				
-                //let mut cl= |ik,jk| {
-					let con =  self.get_alternatives(i, j);
+                 touched[j+i*9]=1;
+            }
+        }
+      }*/   
+    
+
+      let i0= (ix / 3)*3;
+      let j0= (jx / 3)*3;
+   
+       for z in 0..9 {   
+                                   if z!=ix &&self.g(z,jx)==0 {  touched[jx+z*9]=true ;}
+                                   if z!=jx &&self.g(ix,z)==0 { touched[z+ix*9]=true ;}     
+                                   if !((i0+z/3)==ix && (j0+z%3)==jx)  &&self.g(i0+z/3,0+z%3)==0   { touched[j0+z%3+(i0+z/3)*9]=true;  }
+        }
+
+    loop {
+
+     for (t,v) in touched.into_iter().enumerate() {
+         if !v { continue;}
+         let (i,j)=(t/9,t%9);
+    			let con =  self.get_alternatives(i, j);
 					if  con.len() == 1 {
 						self.s(i,j,con[0]);
 						ass.push( Assumption{i, j, v:con[0]});
-                         self.trace_assumptions+=1;
+                        //retouched.push((i,j));
+                        let i0= (i / 3)*3;
+                        let j0= (j / 3)*3;
+   
+                        for z in 0..9 {   
+                                   if z!=i &&self.g(z,j)==0 { retouch[j+z*9]=true ;}
+                                   if z!=j &&self.g(i,z)==0  { retouch[z+i*9]=true ;}     
+                                   if !( (i0+z/3)==i && (j0+z%3)==j)  &&self.g(i0+z/3,0+z%3)==0  { retouch[j0+z%3+(i0+z/3)*9]=true;  }
+                                }
+
+                        self.trace_assumptions+=1;
 					};
+ 
+            }         
 
-				//};
-                
-                //cl(i, j);
-			}
-		}
-	}
+           if ass.len()<= found { return ass;  }
 
+           found= ass.len();
+
+           touched=retouch;
+           retouch=vec![false;81];
+
+
+    }
+   
+
+    
 	ass
 }
+ 
 
 
 //UndoAssumptions revert [wrong] Assumptions
@@ -272,11 +317,11 @@ pub fn  undo_assumptions(&mut self , ass: Vec<Assumption>) {
 		self.s(a.i,a.j, 0)
 
 	}
-	if self.traceback%1000 == 0 {
+	//if self.traceback%1000 == 0 {
 
-		println!("Tracebacks {}", self.traceback);
-		self.print()
-	}
+	//	println!("Tracebacks {}", self.traceback);
+	//	self.print()
+	//}
 }
 
 pub fn find_next_empty_cell(&self) -> Option<(usize,usize)>{
@@ -336,6 +381,8 @@ pub fn  solve(&mut self, d:usize) -> bool {
 }
 
 }
+
+
 
 
 
