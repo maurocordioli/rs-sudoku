@@ -19,9 +19,9 @@ impl Config {
 //Assumption used to track assumption  un possible sulutions
 #[derive(Debug,Clone,PartialEq)]
 pub struct Assumption {
-	I:usize,
-	J:usize,
-	V:u8,
+	i:usize,
+	j:usize,
+	v:u8,
 }
 
 pub struct Board { 
@@ -32,12 +32,14 @@ pub struct Board {
 impl Board {
     pub fn new() -> Self {  Board { cels: vec!(0;81) , traceback:0 }  }
 
+    #[inline]
     pub fn g(&self , r:usize ,c: usize) -> u8 {
 
         self.cels[c+r*9]
 
     }
 
+    #[inline]
     pub fn s(&mut self , r:usize ,c: usize,v: u8) {
 
         self.cels[c+r*9]=v;
@@ -61,10 +63,7 @@ impl Board {
 
 
    pub fn is_valid(&self) -> (bool,bool){
-
-let mut zeros=false;
-
-
+   let mut zeros=false;
    for r in 0..9 {
       let  mut seen = vec![ false;10];
        for i in 0..9 {
@@ -190,7 +189,7 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
 	
     self.s(ix,jx, t);
 
-	ass.push(Assumption{ I:ix, J:jx, V:t});
+	ass.push(Assumption{ i:ix, j:jx, v:t});
 
 	for i  in 0..9   {
 		for j in 0..9  {
@@ -200,7 +199,7 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
 					let con =  self.get_alternatives(i, j);
 					if  con.len() == 1 {
 						self.s(i,j,con[0]);
-						ass.push( Assumption{I: i, J:j, V:con[0]});
+						ass.push( Assumption{i, j, v:con[0]});
 					};
 
 				//};
@@ -216,14 +215,12 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
 
 //UndoAssumptions revert [wrong] assumptions
 pub fn  undo_assumptions(&mut self , ass: Vec<Assumption>) {
-
-
-    self.traceback+=1;
     //println!("undo_assumptions {:?}",ass);
 
-	//self.Traceback++
+    self.traceback+=1;
+
 	for  a in ass {
-		self.s(a.I,a.J, 0)
+		self.s(a.i,a.j, 0)
 
 	}
 	if self.traceback%1000 == 0 {
@@ -247,8 +244,16 @@ for i in 0..9 {
 Option::None
 }
 
-//Solve the board
-pub fn  Solve(&mut self, d:usize) -> bool {
+///solve the board
+/// 
+/// #Example
+/// 
+///     let mut b=rssudoku::Board::new();
+///     b.solve(0);
+///     b.print();
+/// 
+/// 
+pub fn  solve(&mut self, d:usize) -> bool {
 
 	//fmt.Printf("depth %d \n", d)
 	//b.Print()
@@ -282,7 +287,7 @@ pub fn  Solve(&mut self, d:usize) -> bool {
 
                
 
-				if !zeros || self.Solve(d+1) {
+				if !zeros || self.solve(d+1) {
 					return true
 				}
 			}
@@ -441,31 +446,30 @@ fn  test_make_assumptions(){
     let a0 = b.make_assumptions(0, 0, 1);
     println!("0,0 -> 1  ASS {:?}",a0);
     println!("{:?}",b);
-    assert_eq!(a0,vec![ Assumption{ I:0,J:0,V:1};1]);
+    assert_eq!(a0,vec![ Assumption{ i:0,j:0,v:1};1]);
 
 
     let a1 = b.make_assumptions(0, 1, 2);
     println!("0,1 -> 2  ASS {:?}",a1);
     println!("{:?}",b);
-    assert_eq!(a1,vec![ Assumption{ I:0,J:1,V:2}]);
+    assert_eq!(a1,vec![ Assumption{ i:0,j:1,v:2}]);
 
     let a2 = b.make_assumptions(0, 2, 3);
     println!("0,2 -> 3  ASS {:?}",a2);
     println!("{:?}",b);
-    assert_eq!(a2,vec![ Assumption{ I:0,J:2,V:3}]);
+    assert_eq!(a2,vec![ Assumption{ i:0,j:2,v:3}]);
 
 }
 
 
-//#[test]
+#[test]
 fn  test_solve(){
 
     let mut b = Board::new();
-    let a0 = b.Solve(0);
-
+    let a0 = b.solve(0);
     println!("empty  ASS {:?}",a0);
     println!("{:?}",b);
-    assert_eq!(a0,false);
+    assert_eq!(a0,true);
 
  
 }
