@@ -7,7 +7,7 @@ it works....
     rssudoku board.txt
 
 board.txt formats:
-- packed 1->9 rows , missinng rows   are zeroed:
+packed 1->9 rows , missinng rows   are zeroed:
 
     800000000
     003600000
@@ -19,10 +19,11 @@ board.txt formats:
     008500010
     090000400
     
-- packed single rows of 81 elements 0 for empty
+packed single rows of 81 elements 0 for empty
 
     800000000003600000070090200050007000000045700000100030001000068008500010090000400
-- pretty printed: with # comments:
+    
+pretty printed: with # comments:
 
     # the father of all sudoku
     8 0 0 | 0 0 0 | 0 0 0
