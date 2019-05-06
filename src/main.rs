@@ -7,7 +7,7 @@ fn main() {
     let mut b0 = rssudoku::Board::new();
 
     b0.Solve(0);
-    b0.Print();
+    b0.print();
     println!("b0 {:?}",b0.traceback);
 
 
@@ -20,7 +20,7 @@ fn main() {
     b1.s(4,4,5);
     b1.s(5,5,6);
     b1.Solve(0);
-    b1.Print();
+    b1.print();
     println!("b1 {:?}",b1.traceback);
 
   

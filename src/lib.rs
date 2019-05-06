@@ -46,7 +46,7 @@ impl Board {
     
 
     //Print in a pretty format the currend board
-    pub fn   Print(&self)  {
+    pub fn   print(&self)  {
 
 	for i in 0..9 {
 
@@ -229,7 +229,7 @@ pub fn  undo_assumptions(&mut self , ass: Vec<Assumption>) {
 	if self.traceback%1000 == 0 {
 
 		println!("Tracebacks {}", self.traceback);
-		self.Print()
+		self.print()
 	}
 }
 
@@ -326,38 +326,38 @@ fn  test_isvalid(){
  
     let mut b = Board::new();
     //empty
-    b.Print();
+    b.print();
     assert_eq!(b.is_valid(),(true,true));
 
     //single
     b.s(0,0,1);
-    b.Print();   
+    b.print();   
     assert_eq!(b.is_valid(),(true,true));
 
     b.s(1,1,2);
-    b.Print();
+    b.print();
    
     assert_eq!(b.is_valid(),(true,true));
     b.s(0,3,3);
-    b.Print();   
+    b.print();   
     assert_eq!(b.is_valid(),(true,true));
 
     //row violation
     b.s(1,3,2);
-    b.Print(); 
+    b.print(); 
     assert_eq!(b.is_valid(),(false,true));
 
     //section violation
     b.s(1,3,4);
     b.s(1,4,4);
-    b.Print();   
+    b.print();   
     assert_eq!(b.is_valid(),(false,true));
 
     //col violation
     b.s(1,3,4);
     b.s(1,4,5);
     b.s(2,3,4);    
-    b.Print();
+    b.print();
     assert_eq!(b.is_valid(),(false,true));
    
 
@@ -374,14 +374,14 @@ fn test_isvalid_block(){
         b.s(0,c,(c+1) as u8);
     }
     //empty
-    b.Print();
+    b.print();
     println!("{:?}",b );
 
     assert_eq!(b.is_valid(),(true,true));
 
     //r:1 -> [4, 0, 0][0, 0, 0][0, 0, 0]
     b.s(1,0,4);
-    b.Print();
+    b.print();
     println!("{:?}",b );
     assert_eq!(b.is_valid(),(true,true));
 
@@ -414,13 +414,13 @@ fn  test_alternatives(){
  
     let mut b = Board::new();
     //empty
-    b.Print();
+    b.print();
     assert_eq!(b.get_alternatives(0, 0),vec![1,2,3,4,5,6,7,8,9]);
     
     b.s(0,1,1);
     b.s(0,0,2);
    
-    b.Print();   
+    b.print();   
     assert_eq!(b.get_alternatives(0, 0),vec![]);
 
     assert_eq!(b.get_alternatives(0, 2),vec![3,4,5,6,7,8,9]);
@@ -428,7 +428,7 @@ fn  test_alternatives(){
    
     assert_eq!(b.get_alternatives(0, 3),vec![4,5,6,7,8,9]);
 
-    b.Print();
+    b.print();
     
     assert_eq!(b.get_alternatives(8, 8),vec![1,2,3,4,5,6,7,8,9]);
  
