@@ -17,9 +17,11 @@ but forn now you have to code the board:
     println!("b1 {:?}",b1.traceback);
 
 roadmap:
-* input from file
+* ~~input from file~~ DONE
+    - text file 9 char 0-9 9 rows , #comment
+    - text file 21 chars as 1 2 3 | 4 5 6 | 7 8 9     
 * board generator
 * benchmarks
-* optimization ( parallel? let's test)
+* optimization ( ~~parallel? let's test~~ NAH)
 * web ui react
 

@@ -1,5 +1,7 @@
-
 use std::fmt;
+use std::io;
+use std::io::prelude::*;
+use std::string::*;
 
 
 #[derive(Debug)]
@@ -16,7 +18,7 @@ impl Config {
 
 
 
-//Assumption used to track assumption  un possible sulutions
+//assumption used to track Assumption  un possible sulutions
 #[derive(Debug,Clone,PartialEq)]
 pub struct Assumption {
 	i:usize,
@@ -26,11 +28,54 @@ pub struct Assumption {
 
 pub struct Board { 
   cels : Vec<u8>,
-  pub traceback: usize
+  pub traceback: usize,
+  pub trace_assumptions: usize,
+  pub trace_main_assumptions: usize,
+  
 }
 
 impl Board {
-    pub fn new() -> Self {  Board { cels: vec!(0;81) , traceback:0 }  }
+    pub fn new() -> Self {  Board { cels: vec!(0;81) , traceback:0 ,trace_assumptions:0,trace_main_assumptions:0 }  }
+
+    pub fn read_from<T,>(&mut self,  input_reader : T) -> Result<(), io::Error>  where  T: io::Read,
+    {
+    let mut file = io::BufReader::new(input_reader);
+    let mut i =0_usize;
+     
+    let v =0_u8;
+
+    for line in file.lines() {
+        let l = line.unwrap();
+        if l.starts_with("#") { break;} 
+        if l.len()==9 {
+            for  (j,v) in l.chars().enumerate() {
+
+                self.s(i,j, v as u8 - ('0' as u8));
+
+            }
+         i+=1;
+        }
+        if l.len()==21 {
+            let ll=l.chars().filter(|c| c.is_numeric()).collect::<Vec<char>>();
+            let ll_len =ll.len();
+
+          
+            let j:usize=0;
+
+            for  (j,v) in ll.into_iter().enumerate() {
+
+                self.s(i,j, v as u8 - ('0' as u8));
+
+            }
+            
+           if ll_len==9 { i+=1; }
+        }
+        
+         
+    }       
+    // yadda yadda...
+    Ok(())
+ }
 
     #[inline]
     pub fn g(&self , r:usize ,c: usize) -> u8 {
@@ -46,9 +91,12 @@ impl Board {
 
     }
     
+    
+    
 
     //Print in a pretty format the currend board
     pub fn   print(&self)  {
+    println!("# {} {} {}",self.traceback, self.trace_assumptions, self.trace_main_assumptions);
 
 	for i in 0..9 {
 
@@ -90,7 +138,7 @@ impl Board {
    for s in 0..9 {
        let i0= (s / 3)*3;
        let j0= (s % 3)*3;
-      let  mut seen = vec![ false;10];
+       let  mut seen = vec![ false;10];
       
        for i in i0..(i0+3) {
        for j in j0..(j0+3) {
@@ -124,10 +172,7 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
        return res;
    }
    
-
-
-   
-       for i in 0..9 {
+    for i in 0..9 {
 
            if i!=c { 
            let e= self.g(r,i) as usize;
@@ -151,10 +196,10 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
 //println!("seen cols: {:?}",seen );
     
 
-       let i0= (r / 3)*3;
-       let j0= (c / 3)*3;
+    let i0= (r / 3)*3;
+    let j0= (c / 3)*3;
    
-       for i in i0..(i0+3) {
+    for i in i0..(i0+3) {
        for j in j0..(j0+3) {
 
            if i!=r && j!=c {
@@ -173,7 +218,7 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
 //println!("seen section: {:?}",seen );
 
 
-     for i in 1..10 {
+    for i in 1..10 {
          if !seen[i] {
              res.push(i as u8);
          }
@@ -183,13 +228,16 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
    }
  
 
- //MakeAssumptions make the assumptions on the possible solution
+ ///make_assumptions make the Assumptions on the possible solution
     pub fn   make_assumptions(&mut self,ix: usize, jx: usize, t: u8) ->  Vec<Assumption> {
     let mut ass =vec![];
 	
     self.s(ix,jx, t);
 
 	ass.push(Assumption{ i:ix, j:jx, v:t});
+    self.trace_assumptions+=1;
+    self.trace_main_assumptions+=1;
+
 
 	for i  in 0..9   {
 		for j in 0..9  {
@@ -200,6 +248,7 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
 					if  con.len() == 1 {
 						self.s(i,j,con[0]);
 						ass.push( Assumption{i, j, v:con[0]});
+                         self.trace_assumptions+=1;
 					};
 
 				//};
@@ -213,7 +262,7 @@ pub fn get_alternatives(&self,r:usize,c:usize) -> Vec<u8> {
 }
 
 
-//UndoAssumptions revert [wrong] assumptions
+//UndoAssumptions revert [wrong] Assumptions
 pub fn  undo_assumptions(&mut self , ass: Vec<Assumption>) {
     //println!("undo_assumptions {:?}",ass);
 
@@ -231,7 +280,6 @@ pub fn  undo_assumptions(&mut self , ass: Vec<Assumption>) {
 }
 
 pub fn find_next_empty_cell(&self) -> Option<(usize,usize)>{
-
 for i in 0..9 {
 		for j in 0.. 9 {
 			if self.g(i,j) == 0 {
@@ -240,7 +288,6 @@ for i in 0..9 {
 			}
 		}
 	}
-
 Option::None
 }
 
@@ -264,46 +311,30 @@ pub fn  solve(&mut self, d:usize) -> bool {
         //println!("next: {:?}",next);
 
         match next {
-         Option::None  => {
-			return false ;
-		}
-        Some(c)  =>  {
+         Option::None     => { return false ; 	}
+         Option::Some(c)  => {
             let (i,j) =c;
-          let con = self.get_alternatives(i, j);
-
-
-		 //println!("constrains  {},{} {:?}", i, j, con);
-
-		for  t in con {
-			let ass = self.make_assumptions(i, j, t);
-
-           //println!("assumptions  for {} -> {:?}", t, ass);
-
-			let (val, zeros) = self.is_valid();
-
-			if val {
-
-                //println!("\n{:?}", self);
-
-               
-
-				if !zeros || self.solve(d+1) {
-					return true
-				}
-			}
-
-			self.undo_assumptions(ass)
-
-		}
-
-        }
+            let con = self.get_alternatives(i, j);
+    		 //println!("constrains  {},{} {:?}", i, j, con);
+    		for  t in con {
+	    		let ass = self.make_assumptions(i, j, t);
+               //println!("assumptions  for {} -> {:?}", t, ass);
+    			let (val, zeros) = self.is_valid();
+    			if val {
+                    //println!("\n{:?}", self);
+    				if !zeros || self.solve(d+1) {
+					    return true
+	    			    }
+		    	    }
+                self.undo_assumptions(ass)
+		        }
+            }
         }
 		//fmt.Printf("traceback (%d,%d)\n", i, j)
-
-		return false
-
+    	return false
 	}
 }
+
 }
 
 
@@ -313,7 +344,8 @@ pub fn  solve(&mut self, d:usize) -> bool {
 impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
-        write!(f, "Board:\n {:?}{:?}{:?} \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n  -  -  -++-  -  -++-  -  -  \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n  -  -  -++-  -  -++-  -  - \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n ", 
+        write!(f, "Board: {} {} {}\n {:?}{:?}{:?} \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n  -  -  -++-  -  -++-  -  -  \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n  -  -  -++-  -  -++-  -  - \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n {:?}{:?}{:?} \n ", 
+        &self.traceback, self.trace_assumptions, self.trace_main_assumptions,
         &self.cels[0..3]  ,&self.cels[3..6],&self.cels[6..9], 
         &self.cels[9..12] ,&self.cels[12..15],&self.cels[15..18], 
         &self.cels[18..21],&self.cels[21..24],&self.cels[24..27], 
@@ -423,18 +455,15 @@ fn  test_alternatives(){
     assert_eq!(b.get_alternatives(0, 0),vec![1,2,3,4,5,6,7,8,9]);
     
     b.s(0,1,1);
-    b.s(0,0,2);
-   
+    b.s(0,0,2);   
     b.print();   
     assert_eq!(b.get_alternatives(0, 0),vec![]);
 
     assert_eq!(b.get_alternatives(0, 2),vec![3,4,5,6,7,8,9]);
-    b.s(0,2,3);
-   
+    b.s(0,2,3);   
     assert_eq!(b.get_alternatives(0, 3),vec![4,5,6,7,8,9]);
 
-    b.print();
-    
+    b.print();    
     assert_eq!(b.get_alternatives(8, 8),vec![1,2,3,4,5,6,7,8,9]);
  
 
